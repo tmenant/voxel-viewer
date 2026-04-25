@@ -1,8 +1,12 @@
-#include "raylib.h"
+#pragma once
+
+#include <raylib.h>
+#include <cstdint>
+#include <vector>
 
 const float moveSpeed = 10.f;
 const Color backgroundColor = { 64, 64, 64, 255 };
-const Color meshColor = { 128, 128, 128, 255 };
+const Color meshColor = { 128, 128, 128, 128 };
 const Color vertexColor = { 64, 64, 64, 255 };
 
 void UpdateCamera(Camera *camera)
@@ -13,27 +17,24 @@ void UpdateCamera(Camera *camera)
     Vector3 rotation = { 0.0f, 0.0f, 0.0f };
     Vector2 mouseDelta = GetMouseDelta();
 
-    // 1. Bascule (Toggle) : Au moment EXACT où on appuie sur Entrée
     if (IsKeyPressed(KEY_ENTER))
     {
         if (IsCursorHidden())
         {
-            EnableCursor(); // Si elle était cachée, on la libère
+            EnableCursor();
         }
         else
         {
-            DisableCursor(); // Si elle était libre, on la capture
+            DisableCursor();
         }
     }
 
-    // 2. On tourne la caméra UNIQUEMENT si le curseur est actuellement capturé
     if (IsCursorHidden())
     {
         rotation.x = mouseDelta.x * 0.1f;
         rotation.y = mouseDelta.y * 0.1f;
     }
 
-    // --- LE RESTE NE CHANGE PAS ---
     float currentSpeed = moveSpeed;
 
     if (IsKeyDown(KEY_LEFT_SHIFT))
@@ -53,11 +54,207 @@ void UpdateCamera(Camera *camera)
     UpdateCameraPro(camera, movement, rotation, 0.0f);
 }
 
+enum VoxelFace
+{
+    Top,
+    Bottom,
+    Front,
+    Back,
+    Right,
+    Left,
+};
+
+struct VoxelMask
+{
+private:
+    uint8_t mask = 0x3F;
+
+public:
+    inline bool get(VoxelFace face) const
+    {
+        return mask & (1 << face);
+    }
+
+    inline void set(VoxelFace face, bool value)
+    {
+        if (value)
+        {
+            mask |= (1 << face);
+        }
+        else
+        {
+            mask &= ~(1 << face);
+        }
+    }
+
+    inline void clear()
+    {
+        mask = 0;
+    }
+
+    inline void setAll()
+    {
+        mask = 0x3F;
+    }
+};
+
+struct VoxelMesh
+{
+    Mesh mesh = { 0 };
+    Model voxelFace;
+
+    VoxelMesh(const VoxelMesh &) = delete;
+    VoxelMesh &operator=(const VoxelMesh &) = delete;
+
+    VoxelMesh(const std::vector<Vector3> &voxels)
+    {
+        mesh.triangleCount = voxels.size() * 16;
+        mesh.vertexCount = voxels.size() * 8;
+
+        mesh.vertices = (float *)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
+        mesh.indices = (unsigned short *)MemAlloc(mesh.triangleCount * 3 * sizeof(unsigned short));
+
+        /*      y
+                |
+               [4]-------------[7]
+              / |             / |
+             /  |            /  |
+           [5]-------------[6]  |
+            |   |           |   |
+            |   |           |   |
+            |  [0]----------|--[3] -- x
+            |  /            |  /
+            | /             | /
+            [1]-------------[2]
+           /
+          z
+       */
+
+        int vIndex = 0;
+        int iIndex = 0;
+
+        for (const Vector3 &position : voxels)
+        {
+            int currentVertex = vIndex / 3;
+
+            // vertice 0
+            mesh.vertices[vIndex++] = position.x - 0.5f;
+            mesh.vertices[vIndex++] = position.y - 0.5f;
+            mesh.vertices[vIndex++] = position.z - 0.5f;
+
+            // vertice 1
+            mesh.vertices[vIndex++] = position.x - 0.5f;
+            mesh.vertices[vIndex++] = position.y - 0.5f;
+            mesh.vertices[vIndex++] = position.z + 0.5f;
+
+            // vertice 2
+            mesh.vertices[vIndex++] = position.x + 0.5f;
+            mesh.vertices[vIndex++] = position.y - 0.5f;
+            mesh.vertices[vIndex++] = position.z + 0.5f;
+
+            // vertice 3
+            mesh.vertices[vIndex++] = position.x + 0.5f;
+            mesh.vertices[vIndex++] = position.y - 0.5f;
+            mesh.vertices[vIndex++] = position.z - 0.5f;
+
+            // vertice 4
+            mesh.vertices[vIndex++] = position.x - 0.5f;
+            mesh.vertices[vIndex++] = position.y + 0.5f;
+            mesh.vertices[vIndex++] = position.z - 0.5f;
+
+            // vertice 5
+            mesh.vertices[vIndex++] = position.x - 0.5f;
+            mesh.vertices[vIndex++] = position.y + 0.5f;
+            mesh.vertices[vIndex++] = position.z + 0.5f;
+
+            // vertice 6
+            mesh.vertices[vIndex++] = position.x + 0.5f;
+            mesh.vertices[vIndex++] = position.y + 0.5f;
+            mesh.vertices[vIndex++] = position.z + 0.5f;
+
+            // vertice 7
+            mesh.vertices[vIndex++] = position.x + 0.5f;
+            mesh.vertices[vIndex++] = position.y + 0.5f;
+            mesh.vertices[vIndex++] = position.z - 0.5f;
+
+            // bottom
+            mesh.indices[iIndex++] = currentVertex + 0;
+            mesh.indices[iIndex++] = currentVertex + 2;
+            mesh.indices[iIndex++] = currentVertex + 1;
+
+            mesh.indices[iIndex++] = currentVertex + 0;
+            mesh.indices[iIndex++] = currentVertex + 3;
+            mesh.indices[iIndex++] = currentVertex + 2;
+
+            // front
+            mesh.indices[iIndex++] = currentVertex + 1;
+            mesh.indices[iIndex++] = currentVertex + 2;
+            mesh.indices[iIndex++] = currentVertex + 6;
+
+            mesh.indices[iIndex++] = currentVertex + 1;
+            mesh.indices[iIndex++] = currentVertex + 6;
+            mesh.indices[iIndex++] = currentVertex + 5;
+
+            // right
+            mesh.indices[iIndex++] = currentVertex + 6;
+            mesh.indices[iIndex++] = currentVertex + 2;
+            mesh.indices[iIndex++] = currentVertex + 3;
+
+            mesh.indices[iIndex++] = currentVertex + 6;
+            mesh.indices[iIndex++] = currentVertex + 3;
+            mesh.indices[iIndex++] = currentVertex + 7;
+
+            // top
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 5;
+            mesh.indices[iIndex++] = currentVertex + 6;
+
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 6;
+            mesh.indices[iIndex++] = currentVertex + 7;
+
+            // back
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 7;
+            mesh.indices[iIndex++] = currentVertex + 3;
+
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 3;
+            mesh.indices[iIndex++] = currentVertex + 0;
+
+            // left
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 0;
+            mesh.indices[iIndex++] = currentVertex + 1;
+
+            mesh.indices[iIndex++] = currentVertex + 4;
+            mesh.indices[iIndex++] = currentVertex + 1;
+            mesh.indices[iIndex++] = currentVertex + 5;
+        }
+
+        UploadMesh(&mesh, false);
+
+        voxelFace = LoadModelFromMesh(mesh);
+        voxelFace.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = meshColor;
+    }
+
+    ~VoxelMesh()
+    {
+        UnloadModel(voxelFace);
+    }
+
+    void draw()
+    {
+        DrawModel(voxelFace, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, RAYWHITE);
+        DrawModelWires(voxelFace, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, backgroundColor);
+    }
+};
+
 int main()
 {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
-    InitWindow(1920, 1080, "Mon super Voxel");
+    InitWindow(1920, 1080, "Raylib - Voxel Viewer");
     MaximizeWindow();
 
     Camera3D camera = { 0 };
@@ -67,9 +264,17 @@ int main()
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    SetTargetFPS(60);
+    SetTargetFPS(120);
 
     DisableCursor();
+
+    std::vector<Vector3> voxels = {
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 3, 0 },
+    };
+
+    VoxelMesh voxelMesh(voxels);
 
     while (!WindowShouldClose())
     {
@@ -79,8 +284,9 @@ int main()
         ClearBackground(backgroundColor);
 
         BeginMode3D(camera);
-        DrawCube((Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, 2.0f, 2.0f, meshColor);
-        DrawCubeWires((Vector3){ 0.0f, 0.0f, 0.0f }, 2.0f, 2.0f, 2.0f, vertexColor);
+
+        voxelMesh.draw();
+
         EndMode3D();
 
         EndDrawing();
