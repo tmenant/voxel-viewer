@@ -182,7 +182,7 @@ RemoveSemicolon: true
 # RequiresExpressionIndentation: OuterScope
 # SeparateDefinitionBlocks: Leave
 # ShortNamespaceLines: 1
-# SortIncludes: CaseSensitive
+SortIncludes: Never
 # SortJavaStaticImport: Before
 # SortUsingDeclarations: LexicographicNumeric
 # SpaceAfterCStyleCast: false
