@@ -1,8 +1,8 @@
-#pragma once
-
 #include <raylib.h>
 #include <cstdint>
 #include <vector>
+
+#include "cavemap.h"
 
 const float moveSpeed = 10.f;
 const Color backgroundColor = { 64, 64, 64, 255 };
@@ -252,6 +252,7 @@ struct VoxelMesh
 
 int main()
 {
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
     InitWindow(1920, 1080, "Raylib - Voxel Viewer");
@@ -268,13 +269,9 @@ int main()
 
     DisableCursor();
 
-    std::vector<Vector3> voxels = {
-        { 0, 0, 0 },
-        { 0, 1, 0 },
-        { 0, 3, 0 },
-    };
 
-    VoxelMesh voxelMesh(voxels);
+    CaveMap cavemap;
+    VoxelMesh voxelMesh(cavemap.voxels);
 
     while (!WindowShouldClose())
     {
