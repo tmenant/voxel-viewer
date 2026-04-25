@@ -35,18 +35,16 @@ FetchContent_Declare(
     GIT_TAG        12.1.0
 )
 
-# --- glfw ---
+# --- raylib ---
 FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw
-    GIT_TAG        3.4
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG        6.0
 )
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
 set(PUGIXML_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(external/glad)
 
 FetchContent_MakeAvailable(
     fmt
@@ -54,5 +52,5 @@ FetchContent_MakeAvailable(
     cli11
     pugixml
     magic_enum
-    glfw
+    raylib
 )

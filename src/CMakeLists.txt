@@ -17,6 +17,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     pugixml::pugixml
     magic_enum::magic_enum
     fmt::fmt
-    glad
-    glfw
+    raylib
 )
