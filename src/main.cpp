@@ -35,8 +35,8 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const std::string vertexCode = readFile("shaders/triangle.vs");
-const std::string fragmentCode = readFile("shaders/triangle.fs");
+const std::string vertexCode = readFile("shaders/triangle.vert");
+const std::string fragmentCode = readFile("shaders/triangle.frag");
 
 const char *vShaderCode = vertexCode.c_str();
 const char *fShaderCode = fragmentCode.c_str();
@@ -91,8 +91,12 @@ int main()
     // Coordonnées des 3 sommets (X, Y, Z)
     float vertices[] = {
         -0.5f, -0.5f, 0.0f, // Bas Gauche
-        0.5f, -0.5f, 0.0f,  // Bas Droite
-        0.0f, 0.5f, 0.0f    // Haut
+        0.5f,
+        -0.5f,
+        0.0f, // Bas Droite
+        0.0f,
+        0.5f,
+        0.0f // Haut
     };
 
     unsigned int VBO, VAO;
