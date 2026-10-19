@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -37,4 +38,27 @@ void File::writeAllBytes(const std::vector<uint8_t> &buffer, const std::string &
     {
         throw std::runtime_error("Failed to write to file: " + path);
     }
+}
+
+std::string File::readText(const char *filePath)
+{
+    std::string contenu;
+    std::ifstream stream;
+
+    stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    try
+    {
+        stream.open(filePath);
+        std::stringstream fileStream;
+        fileStream << stream.rdbuf();
+        stream.close();
+        contenu = fileStream.str();
+    }
+    catch (std::ifstream::failure &e)
+    {
+        std::cout << "ERROR::SHADER::FILE_NOT_READ (" << filePath << ")" << std::endl;
+    }
+
+    return contenu;
 }

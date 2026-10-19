@@ -13,15 +13,6 @@
             }
         },
         {
-            "name": "mingw-debug",
-            "inherits": "base-mingw",
-            "displayName": "Debug: MinGW Makefiles",
-            "generator": "MinGW Makefiles",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
             "name": "ninja-debug",
             "inherits": "base-mingw",
             "displayName": "Debug: Ninja",
@@ -45,10 +36,6 @@
         }
     ],
     "buildPresets": [
-        {
-            "name": "mingw-debug",
-            "configurePreset": "mingw-debug"
-        },
         {
             "name": "ninja-debug",
             "configurePreset": "ninja-debug"

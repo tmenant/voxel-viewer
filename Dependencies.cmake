@@ -42,6 +42,13 @@ FetchContent_Declare(
     GIT_TAG        3.4
 )
 
+# --- glm ---
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm
+    GIT_TAG        1.0.3
+)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(PUGIXML_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -55,4 +62,5 @@ FetchContent_MakeAvailable(
     pugixml
     magic_enum
     glfw
+    glm
 )
