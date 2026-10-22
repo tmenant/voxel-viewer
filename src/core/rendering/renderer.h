@@ -10,7 +10,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "world/voxel_world.h"
-#include "core/geometry/voxel.h"
+#include "core/geometry/voxel_mesh.h"
 
 class Renderer
 {
@@ -43,7 +43,6 @@ public:
 
     void clear()
     {
-        // Couleur de fond (gris foncé) + nettoyage couleur et profondeur
         glClearColor(0.12f, 0.12f, 0.14f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -79,8 +78,9 @@ private:
     void setupCubeMesh()
     {
         std::vector<glm::vec3> positions = {
-            { 0, 0, 0 },
-            { 0, 2, 0 },
+            { 0, 0, -5 },
+            { 0, 1, -5 },
+            { 0, 2, -5 },
         };
 
         VoxelMesh mesh(positions);

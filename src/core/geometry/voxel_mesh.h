@@ -4,50 +4,6 @@
 #include <cstdint>
 #include <vector>
 
-enum VoxelFace
-{
-    Top,
-    Bottom,
-    Front,
-    Back,
-    Right,
-    Left,
-};
-
-struct VoxelMask
-{
-private:
-    uint8_t mask = 0x3F;
-
-public:
-    inline bool get(VoxelFace face) const
-    {
-        return mask & (1 << face);
-    }
-
-    inline void set(VoxelFace face, bool value)
-    {
-        if (value)
-        {
-            mask |= (1 << face);
-        }
-        else
-        {
-            mask &= ~(1 << face);
-        }
-    }
-
-    inline void clear()
-    {
-        mask = 0;
-    }
-
-    inline void setAll()
-    {
-        mask = 0x3F;
-    }
-};
-
 /*      y
         |
        [4]-------------[7]
