@@ -21,7 +21,11 @@ private:
     GLuint m_vbo = 0;
     GLuint m_ebo = 0;
 
-    size_t verticesCount;
+    GLuint m_vaoEdges;
+    GLuint m_eboEdges;
+
+    size_t triangleIndicesCount;
+    size_t lineIndicesCount;
 
 public:
     Renderer() : m_shader("shaders/voxel.vert", "shaders/voxel.frag")
@@ -48,14 +52,26 @@ public:
     {
         m_shader.use();
 
+        m_shader.setVec4("u_Color", glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
         m_shader.setMat4("u_View", camera.getViewMatrix());
         m_shader.setMat4("u_Projection", camera.getProjectionMatrix());
 
         glm::mat4 model = glm::mat4(1.0f);
         m_shader.setMat4("u_Model", model);
 
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.0f, 1.0f);
+
         glBindVertexArray(m_vao);
-        glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, triangleIndicesCount, GL_UNSIGNED_INT, nullptr);
+
+        glDisable(GL_POLYGON_OFFSET_FILL);
+
+        m_shader.setVec4("u_Color", glm::vec4(0.f, 0.f, 0.f, 1.0f));
+
+        glBindVertexArray(m_vaoEdges);
+        glDrawElements(GL_LINES, lineIndicesCount, GL_UNSIGNED_INT, nullptr);
+
         glBindVertexArray(0);
     }
 
@@ -69,8 +85,10 @@ private:
 
         VoxelMesh mesh(positions);
 
-        verticesCount = mesh.indices.size();
+        triangleIndicesCount = mesh.indices.size();
+        lineIndicesCount = mesh.lineIndices.size();
 
+        // voxel faces
         glGenVertexArrays(1, &m_vao);
 
         glGenBuffers(1, &m_vbo);
@@ -83,6 +101,20 @@ private:
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(0);
+
+        // wireframe
+        glGenVertexArrays(1, &m_vaoEdges);
+        glBindVertexArray(m_vaoEdges);
+        glGenBuffers(1, &m_eboEdges);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboEdges);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.lineIndices.size() * sizeof(uint32_t), mesh.lineIndices.data(), GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);

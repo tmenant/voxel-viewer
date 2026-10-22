@@ -72,6 +72,11 @@ public:
         glUniform1f(getUniformLocation(name), value);
     }
 
+    void setVec4(const std::string &name, const glm::vec4 &color) const
+    {
+        glUniform4f(getUniformLocation(name), color.r, color.g, color.b, color.a);
+    }
+
     void setMat4(const std::string &name, const glm::mat4 &matrix) const
     {
         glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
