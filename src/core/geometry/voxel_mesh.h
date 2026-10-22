@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <unordered_set>
 #include <vector>
+#include "utils/logger.h"
+#include "utils/timer.h"
 
 /*      y
         |
@@ -31,7 +33,7 @@ inline uint64_t packPosition(float x, float y, float z)
     return ux | (uz << 16) | (uy << 32);
 }
 
-struct VoxelMesh
+struct VoxelMesh : public Loggable<VoxelMesh>
 {
     std::vector<float> vertices;
     std::vector<uint32_t> indices;
@@ -42,14 +44,7 @@ struct VoxelMesh
 
     VoxelMesh(const std::vector<glm::vec3> &voxels)
     {
-        createOptimizedMesh(voxels);
-    }
-
-    void createOptimizedMesh(const std::vector<glm::vec3> &voxels)
-    {
-        int vIndex = 0;
-        int iIndex = 0;
-        int lIndex = 0;
+        Timer timer;
 
         vertices.reserve(voxels.size() * 24);
         indices.reserve(voxels.size() * 36);
@@ -76,6 +71,8 @@ struct VoxelMesh
             if (isAir(pos.x, pos.y, pos.z + 1)) addFrontFace(pos);
             if (isAir(pos.x, pos.y, pos.z - 1)) addBackFace(pos);
         }
+
+        logger.info("triangles: {}, timer: {}ms", vertices.size() / 3, timer.elapsedMiliseconds());
     }
 
     void addQuad(float v0[], float v1[], float v2[], float v3[])

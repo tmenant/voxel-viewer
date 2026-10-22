@@ -6,20 +6,20 @@
 #include "inputs.h"
 #include "rendering/camera.h"
 #include "rendering/renderer.h"
-#include "world/voxel_world.h"
+#include "utils/logger.h"
 
-class Application
+class Application : public Loggable<Application>
 {
 private:
     InputManager m_input;
     AppWindow m_window;
     Camera m_camera;
-    VoxelWorld m_world;
     Renderer m_renderer;
 
 public:
     Application(const std::string &name, int width, int height) : m_window(name, width, height, m_input)
     {
+        m_camera.setPosition(m_renderer.center);
     }
 
     void run()
@@ -35,7 +35,7 @@ public:
             processInputs(deltaTime);
 
             m_renderer.clear();
-            m_renderer.renderWorld(m_world, m_camera);
+            m_renderer.renderWorld(m_camera);
             m_window.swapBuffers();
         }
     }

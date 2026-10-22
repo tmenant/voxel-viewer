@@ -4,12 +4,11 @@
 #include <glad/glad.h>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "shader.h"
 #include "camera.h"
-#include "world/voxel_world.h"
+#include "world/cavemap.h"
 #include "core/geometry/voxel_mesh.h"
 
 class Renderer
@@ -28,6 +27,8 @@ private:
     size_t lineIndicesCount;
 
 public:
+    glm::vec3 center;
+
     Renderer() : m_shader("shaders/voxel.vert", "shaders/voxel.frag")
     {
         glEnable(GL_DEPTH_TEST);
@@ -47,7 +48,7 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void renderWorld(const VoxelWorld &world, const Camera &camera)
+    void renderWorld(const Camera &camera)
     {
         m_shader.use();
 
@@ -77,13 +78,10 @@ public:
 private:
     void setupCubeMesh()
     {
-        std::vector<glm::vec3> positions = {
-            { 0, 0, -5 },
-            { 0, 1, -5 },
-            { 0, 2, -5 },
-        };
+        CaveMap caveMap;
+        VoxelMesh mesh(caveMap.voxels);
 
-        VoxelMesh mesh(positions);
+        center = caveMap.center;
 
         triangleIndicesCount = mesh.indices.size();
         lineIndicesCount = mesh.lineIndices.size();

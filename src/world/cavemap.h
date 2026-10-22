@@ -1,28 +1,53 @@
 #pragma once
 
-#include <raylib.h>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 
-#include "fmt/base.h"
-#include "io/binary_reader.h"
-#include "io/file.h"
-#include "timer.h"
+#include <fmt/base.h>
+#include <glm/ext/vector_float3.hpp>
 
-struct CaveMap
+#include "core/io/binary_reader.h"
+#include "core/io/file.h"
+#include "glm/ext/vector_double3.hpp"
+#include "utils/logger.h"
+#include "utils/timer.h"
+
+namespace fs = std::filesystem;
+
+struct CaveMap : public Loggable<CaveMap>
 {
-    std::vector<Vector3> voxels;
+    std::vector<glm::vec3> voxels;
+
+    glm::dvec3 center;
 
     CaveMap()
     {
         Timer timer;
 
         std::string filename = "ignore/cavemap/region_0.bin";
+
+        for (const auto &entry : fs::directory_iterator("ignore/cavemap"))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".bin")
+            {
+                readCaveRegion(entry.path().string());
+            }
+        }
+
+        center /= voxels.size();
+
+        logger.info("{} voxels parsed in {}ms", voxels.size(), timer.elapsedMiliseconds());
+    }
+
+    void readCaveRegion(const std::string &filename)
+    {
         std::vector<uint8_t> bytes = File::readAllBytes(filename);
 
         size_t offset = 0;
+        size_t voxelsCount = 0;
 
         while (offset < bytes.size())
         {
@@ -40,10 +65,14 @@ struct CaveMap
                 for (int y = start; y <= end; y++)
                 {
                     voxels.emplace_back(x, y, z);
+
+                    center.x += x;
+                    center.y += y;
+                    center.z += z;
+
+                    voxelsCount++;
                 }
             }
         }
-
-        fmt::println("{} voxels parsed in {}ms", voxels.size(), timer.elapsedMiliseconds());
     }
 };

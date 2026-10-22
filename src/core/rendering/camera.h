@@ -50,7 +50,7 @@ public:
             pitch(0.f),
             fov(45.f),
             nearPlane(0.1f),
-            farPlane(100.f),
+            farPlane(99999.f),
             aspectRatio(1920.f / 1080.f)
     {
         updateCameraVectors();
@@ -68,9 +68,9 @@ public:
 
     void processInputs(float deltaTime, const InputManager &inputs)
     {
-        float velocity = 2.5f * deltaTime;
+        float velocity = 25.f * deltaTime;
 
-        if(inputs.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) velocity *= 5;
+        if (inputs.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) velocity *= 5;
 
         if (inputs.isKeyPressed(AZERTY_KEY_Z)) position += front * velocity;
         if (inputs.isKeyPressed(AZERTY_KEY_Q)) position -= right * velocity;
@@ -126,6 +126,11 @@ public:
         {
             firstClick = true;
         }
+    }
+
+    void setPosition(const glm::vec3 &position)
+    {
+        this->position = position;
     }
 
     void setAspectRatio(float aspect)
