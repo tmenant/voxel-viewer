@@ -70,6 +70,8 @@ public:
     {
         float velocity = 2.5f * deltaTime;
 
+        if(inputs.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) velocity *= 5;
+
         if (inputs.isKeyPressed(AZERTY_KEY_Z)) position += front * velocity;
         if (inputs.isKeyPressed(AZERTY_KEY_Q)) position -= right * velocity;
         if (inputs.isKeyPressed(AZERTY_KEY_S)) position -= front * velocity;
