@@ -54,6 +54,7 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(PUGIXML_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glad)
+add_subdirectory(external/imgui)
 
 FetchContent_MakeAvailable(
     fmt

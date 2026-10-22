@@ -1,8 +1,11 @@
 #pragma once
 
 #include <string>
+#include <imgui.h>
 
 #include "app_window.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "inputs.h"
 #include "rendering/camera.h"
 #include "rendering/renderer.h"
@@ -26,16 +29,42 @@ public:
     {
         float lastFrame = 0.0f;
 
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForOpenGL(m_window.getNativeWindow(), true);
+        ImGui_ImplOpenGL3_Init("#version 130");
+
+        bool show_demo_window = true;
+
         while (!m_window.shouldClose())
         {
             float currentFrame = static_cast<float>(glfwGetTime());
             float deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
 
+            m_window.pollEvents();
+
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            if (show_demo_window)
+            {
+                ImGui::ShowDemoWindow(&show_demo_window);
+            }
+
             processInputs(deltaTime);
+
+            ImGui::Render();
 
             m_renderer.clear();
             m_renderer.renderWorld(m_camera);
+
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
             m_window.swapBuffers();
         }
     }
@@ -43,8 +72,6 @@ public:
 private:
     void processInputs(float dt)
     {
-        m_window.pollEvents();
-
         m_camera.processInputs(dt, m_input);
 
         if (m_input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))

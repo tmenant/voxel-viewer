@@ -34,6 +34,7 @@ struct CaveMap : public Loggable<CaveMap>
             if (entry.is_regular_file() && entry.path().extension() == ".bin")
             {
                 readCaveRegion(entry.path().string());
+                break;
             }
         }
 
