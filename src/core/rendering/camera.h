@@ -20,6 +20,11 @@ private:
     float yaw;
     float pitch;
 
+    double lastMouseX = 0.0;
+    double lastMouseY = 0.0;
+    float mouseSensitivity = 0.1f;
+    bool firstClick = true;
+
     float fov;
     float aspectRatio;
     float nearPlane;
@@ -64,6 +69,7 @@ public:
     void processInputs(float deltaTime, const InputManager &inputs)
     {
         float velocity = 2.5f * deltaTime;
+
         if (inputs.isKeyPressed(AZERTY_KEY_Z)) position += front * velocity;
         if (inputs.isKeyPressed(AZERTY_KEY_Q)) position -= right * velocity;
         if (inputs.isKeyPressed(AZERTY_KEY_S)) position -= front * velocity;
@@ -71,6 +77,53 @@ public:
 
         if (inputs.isKeyPressed(GLFW_KEY_SPACE)) position += up * velocity;
         if (inputs.isKeyPressed(GLFW_KEY_C)) position -= up * velocity;
+
+        rotateCamera(deltaTime, inputs);
+    }
+
+    void rotateCamera(float deltaTime, const InputManager &inputs)
+    {
+        if (inputs.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        {
+            double mouseX, mouseY;
+            inputs.getMousePosition(mouseX, mouseY);
+
+            // Si c'est le tout premier clic, on initialise les anciennes coordonnées
+            // pour éviter que la caméra ne "saute" d'un coup vers la souris.
+            if (firstClick)
+            {
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                firstClick = false;
+            }
+
+            // Calcul du décalage (offset) de la souris
+            float xoffset = static_cast<float>(mouseX - lastMouseX);
+            float yoffset = static_cast<float>(lastMouseY - mouseY); // Inversé car les Y vont de bas en haut sur l'écran
+
+            // On sauvegarde la position actuelle pour la prochaine frame
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+
+            // On applique la sensibilité
+            xoffset *= mouseSensitivity;
+            yoffset *= mouseSensitivity;
+
+            // On ajoute aux angles de la caméra
+            yaw += xoffset;
+            pitch += yoffset;
+
+            // On bloque le pitch (tangage) à 89 degrés pour éviter le "Gimbal Lock" (la caméra qui se retourne)
+            if (pitch > 89.0f) pitch = 89.0f;
+            if (pitch < -89.0f) pitch = -89.0f;
+
+            // On met à jour les vecteurs de direction de la caméra
+            updateCameraVectors();
+        }
+        else
+        {
+            firstClick = true;
+        }
     }
 
     void setAspectRatio(float aspect)

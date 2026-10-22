@@ -51,6 +51,12 @@ public:
             if (input) input->onKey(key, scancode, action);
         });
 
+        glfwSetMouseButtonCallback(m_window, [](GLFWwindow *win, int button, int action, int mods)
+        {
+            auto *input = static_cast<InputManager *>(glfwGetWindowUserPointer(win));
+            if (input) input->onMouseButton(button, action, mods);
+        });
+
         glfwSetCursorPosCallback(m_window, [](GLFWwindow *win, double xpos, double ypos)
         {
             auto *input = static_cast<InputManager *>(glfwGetWindowUserPointer(win));

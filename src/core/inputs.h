@@ -36,6 +36,8 @@ class InputManager
 {
 private:
     bool m_keys[GLFW_KEY_LAST] = { false };
+    bool m_mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1] = { false };
+
     double m_mouseX = 0.0;
     double m_mouseY = 0.0;
 
@@ -48,6 +50,20 @@ public:
         {
             m_keys[key] = (action != GLFW_RELEASE);
         }
+    }
+
+    void onMouseButton(int button, int action, int mods)
+    {
+        if (button >= 0 && button <= GLFW_MOUSE_BUTTON_LAST)
+        {
+            m_mouseButtons[button] = (action != GLFW_RELEASE);
+        }
+    }
+
+    bool isMouseButtonPressed(int button) const
+    {
+        if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) return false;
+        return m_mouseButtons[button];
     }
 
     void onMouseMove(double x, double y)
