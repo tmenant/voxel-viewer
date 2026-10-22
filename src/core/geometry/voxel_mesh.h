@@ -1,7 +1,9 @@
 #pragma once
 
 #include "glm/ext/vector_float3.hpp"
+#include <cstddef>
 #include <cstdint>
+#include <unordered_set>
 #include <vector>
 
 /*      y
@@ -12,13 +14,22 @@
    [5]-------------[6]  |
     |   |           |   |
     |   |           |   |
-    |  [0]----------|--[3] -- x
+    |  [0]----------|--[1] -- x
     |  /            |  /
     | /             | /
-    [1]-------------[2]
+    [3]-------------[2]
    /
   z
 */
+
+inline uint64_t packPosition(float x, float y, float z)
+{
+    uint64_t ux = static_cast<uint16_t>(x);
+    uint64_t uy = static_cast<uint16_t>(y);
+    uint64_t uz = static_cast<uint16_t>(z);
+
+    return ux | (uz << 16) | (uy << 32);
+}
 
 struct VoxelMesh
 {
@@ -31,160 +42,143 @@ struct VoxelMesh
 
     VoxelMesh(const std::vector<glm::vec3> &voxels)
     {
+        createOptimizedMesh(voxels);
+    }
+
+    void createOptimizedMesh(const std::vector<glm::vec3> &voxels)
+    {
         int vIndex = 0;
         int iIndex = 0;
         int lIndex = 0;
 
-        vertices.resize(voxels.size() * 24);
-        indices.resize(voxels.size() * 36);
-        lineIndices.resize(voxels.size() * 24);
+        vertices.reserve(voxels.size() * 24);
+        indices.reserve(voxels.size() * 36);
+        lineIndices.reserve(voxels.size() * 24);
 
-        for (const glm::vec3 &position : voxels)
+        std::unordered_set<uint64_t> voxelsLookup(voxels.size());
+
+        auto isAir = [&](float x, float y, float z) -> bool
         {
-            int currentVertex = vIndex / 3;
+            return voxelsLookup.find(packPosition(x, y, z)) == voxelsLookup.end();
+        };
 
-            createVertices(vIndex, position);
-            createTrianglesIndices(iIndex, currentVertex);
-            createLineIndices(lIndex, currentVertex);
+        for (const auto &pos : voxels)
+        {
+            voxelsLookup.insert(packPosition(pos.x, pos.y, pos.z));
+        }
+
+        for (const auto &pos : voxels)
+        {
+            if (isAir(pos.x + 1, pos.y, pos.z)) addRightFace(pos);
+            if (isAir(pos.x - 1, pos.y, pos.z)) addLeftFace(pos);
+            if (isAir(pos.x, pos.y + 1, pos.z)) addTopFace(pos);
+            if (isAir(pos.x, pos.y - 1, pos.z)) addBottomFace(pos);
+            if (isAir(pos.x, pos.y, pos.z + 1)) addFrontFace(pos);
+            if (isAir(pos.x, pos.y, pos.z - 1)) addBackFace(pos);
         }
     }
 
-    void createVertices(int &vIndex, const glm::vec3 &position)
+    void addQuad(float v0[], float v1[], float v2[], float v3[])
     {
-        // vertice 0
-        vertices[vIndex++] = position.x - 0.5f;
-        vertices[vIndex++] = position.y - 0.5f;
-        vertices[vIndex++] = position.z - 0.5f;
+        size_t currentVertex = vertices.size() / 3;
 
-        // vertice 1
-        vertices[vIndex++] = position.x - 0.5f;
-        vertices[vIndex++] = position.y - 0.5f;
-        vertices[vIndex++] = position.z + 0.5f;
+        // vertices
+        vertices.push_back(v0[0]);
+        vertices.push_back(v0[1]);
+        vertices.push_back(v0[2]);
 
-        // vertice 2
-        vertices[vIndex++] = position.x + 0.5f;
-        vertices[vIndex++] = position.y - 0.5f;
-        vertices[vIndex++] = position.z + 0.5f;
+        vertices.push_back(v1[0]);
+        vertices.push_back(v1[1]);
+        vertices.push_back(v1[2]);
 
-        // vertice 3
-        vertices[vIndex++] = position.x + 0.5f;
-        vertices[vIndex++] = position.y - 0.5f;
-        vertices[vIndex++] = position.z - 0.5f;
+        vertices.push_back(v2[0]);
+        vertices.push_back(v2[1]);
+        vertices.push_back(v2[2]);
 
-        // vertice 4
-        vertices[vIndex++] = position.x - 0.5f;
-        vertices[vIndex++] = position.y + 0.5f;
-        vertices[vIndex++] = position.z - 0.5f;
+        vertices.push_back(v3[0]);
+        vertices.push_back(v3[1]);
+        vertices.push_back(v3[2]);
 
-        // vertice 5
-        vertices[vIndex++] = position.x - 0.5f;
-        vertices[vIndex++] = position.y + 0.5f;
-        vertices[vIndex++] = position.z + 0.5f;
+        // triangles indices
+        indices.push_back(currentVertex + 0);
+        indices.push_back(currentVertex + 1);
+        indices.push_back(currentVertex + 2);
 
-        // vertice 6
-        vertices[vIndex++] = position.x + 0.5f;
-        vertices[vIndex++] = position.y + 0.5f;
-        vertices[vIndex++] = position.z + 0.5f;
+        indices.push_back(currentVertex + 2);
+        indices.push_back(currentVertex + 3);
+        indices.push_back(currentVertex + 0);
 
-        // vertice 7
-        vertices[vIndex++] = position.x + 0.5f;
-        vertices[vIndex++] = position.y + 0.5f;
-        vertices[vIndex++] = position.z - 0.5f;
+        // lines indices
+        lineIndices.push_back(currentVertex + 0);
+        lineIndices.push_back(currentVertex + 1);
+
+        lineIndices.push_back(currentVertex + 1);
+        lineIndices.push_back(currentVertex + 2);
+
+        lineIndices.push_back(currentVertex + 2);
+        lineIndices.push_back(currentVertex + 3);
+
+        lineIndices.push_back(currentVertex + 3);
+        lineIndices.push_back(currentVertex + 0);
     }
 
-    void createTrianglesIndices(int &iIndex, int currentVertex)
+    void addRightFace(const glm::vec3 &pos)
     {
-        // bottom
-        indices[iIndex++] = currentVertex + 0;
-        indices[iIndex++] = currentVertex + 2;
-        indices[iIndex++] = currentVertex + 1;
+        float v1[] = { pos.x + .5f, pos.y - .5f, pos.z - .5f };
+        float v7[] = { pos.x + .5f, pos.y + .5f, pos.z - .5f };
+        float v6[] = { pos.x + .5f, pos.y + .5f, pos.z + .5f };
+        float v2[] = { pos.x + .5f, pos.y - .5f, pos.z + .5f };
 
-        indices[iIndex++] = currentVertex + 0;
-        indices[iIndex++] = currentVertex + 3;
-        indices[iIndex++] = currentVertex + 2;
-
-        // top
-        indices[iIndex++] = currentVertex + 4;
-        indices[iIndex++] = currentVertex + 5;
-        indices[iIndex++] = currentVertex + 6;
-
-        indices[iIndex++] = currentVertex + 6;
-        indices[iIndex++] = currentVertex + 7;
-        indices[iIndex++] = currentVertex + 4;
-
-        // front
-        indices[iIndex++] = currentVertex + 1;
-        indices[iIndex++] = currentVertex + 2;
-        indices[iIndex++] = currentVertex + 6;
-
-        indices[iIndex++] = currentVertex + 6;
-        indices[iIndex++] = currentVertex + 5;
-        indices[iIndex++] = currentVertex + 1;
-
-        // rear
-        indices[iIndex++] = currentVertex + 0;
-        indices[iIndex++] = currentVertex + 4;
-        indices[iIndex++] = currentVertex + 7;
-
-        indices[iIndex++] = currentVertex + 7;
-        indices[iIndex++] = currentVertex + 3;
-        indices[iIndex++] = currentVertex + 0;
-
-        // right
-        indices[iIndex++] = currentVertex + 3;
-        indices[iIndex++] = currentVertex + 7;
-        indices[iIndex++] = currentVertex + 6;
-
-        indices[iIndex++] = currentVertex + 6;
-        indices[iIndex++] = currentVertex + 2;
-        indices[iIndex++] = currentVertex + 3;
-
-        // left
-        indices[iIndex++] = currentVertex + 0;
-        indices[iIndex++] = currentVertex + 1;
-        indices[iIndex++] = currentVertex + 5;
-
-        indices[iIndex++] = currentVertex + 5;
-        indices[iIndex++] = currentVertex + 4;
-        indices[iIndex++] = currentVertex + 0;
+        addQuad(v1, v7, v6, v2);
     }
 
-    void createLineIndices(int &lIndex, int currentVertex)
+    void addLeftFace(const glm::vec3 &pos)
     {
-        lineIndices[lIndex++] = currentVertex + 0;
-        lineIndices[lIndex++] = currentVertex + 1;
+        float v0[] = { pos.x - .5f, pos.y - .5f, pos.z - .5f };
+        float v3[] = { pos.x - .5f, pos.y - .5f, pos.z + .5f };
+        float v5[] = { pos.x - .5f, pos.y + .5f, pos.z + .5f };
+        float v4[] = { pos.x - .5f, pos.y + .5f, pos.z - .5f };
 
-        lineIndices[lIndex++] = currentVertex + 0;
-        lineIndices[lIndex++] = currentVertex + 3;
+        addQuad(v0, v3, v5, v4);
+    }
 
-        lineIndices[lIndex++] = currentVertex + 1;
-        lineIndices[lIndex++] = currentVertex + 2;
+    void addFrontFace(const glm::vec3 &pos)
+    {
+        float v5[] = { pos.x - .5f, pos.y + .5f, pos.z + .5f };
+        float v3[] = { pos.x - .5f, pos.y - .5f, pos.z + .5f };
+        float v2[] = { pos.x + .5f, pos.y - .5f, pos.z + .5f };
+        float v6[] = { pos.x + .5f, pos.y + .5f, pos.z + .5f };
 
-        lineIndices[lIndex++] = currentVertex + 2;
-        lineIndices[lIndex++] = currentVertex + 3;
+        addQuad(v5, v3, v2, v6);
+    }
 
-        lineIndices[lIndex++] = currentVertex + 4;
-        lineIndices[lIndex++] = currentVertex + 5;
+    void addBackFace(const glm::vec3 &pos)
+    {
+        float v0[] = { pos.x - .5f, pos.y - .5f, pos.z - .5f };
+        float v4[] = { pos.x - .5f, pos.y + .5f, pos.z - .5f };
+        float v7[] = { pos.x + .5f, pos.y + .5f, pos.z - .5f };
+        float v1[] = { pos.x + .5f, pos.y - .5f, pos.z - .5f };
 
-        lineIndices[lIndex++] = currentVertex + 5;
-        lineIndices[lIndex++] = currentVertex + 6;
+        addQuad(v0, v4, v7, v1);
+    }
 
-        lineIndices[lIndex++] = currentVertex + 6;
-        lineIndices[lIndex++] = currentVertex + 7;
+    void addTopFace(const glm::vec3 &pos)
+    {
+        float v4[] = { pos.x - .5f, pos.y + .5f, pos.z - .5f };
+        float v5[] = { pos.x - .5f, pos.y + .5f, pos.z + .5f };
+        float v6[] = { pos.x + .5f, pos.y + .5f, pos.z + .5f };
+        float v7[] = { pos.x + .5f, pos.y + .5f, pos.z - .5f };
 
-        lineIndices[lIndex++] = currentVertex + 7;
-        lineIndices[lIndex++] = currentVertex + 4;
+        addQuad(v4, v5, v6, v7);
+    }
 
-        lineIndices[lIndex++] = currentVertex + 0;
-        lineIndices[lIndex++] = currentVertex + 4;
+    void addBottomFace(const glm::vec3 &pos)
+    {
+        float v0[] = { pos.x - .5f, pos.y - .5f, pos.z - .5f };
+        float v1[] = { pos.x + .5f, pos.y - .5f, pos.z - .5f };
+        float v2[] = { pos.x + .5f, pos.y - .5f, pos.z + .5f };
+        float v3[] = { pos.x - .5f, pos.y - .5f, pos.z + .5f };
 
-        lineIndices[lIndex++] = currentVertex + 1;
-        lineIndices[lIndex++] = currentVertex + 5;
-
-        lineIndices[lIndex++] = currentVertex + 2;
-        lineIndices[lIndex++] = currentVertex + 6;
-
-        lineIndices[lIndex++] = currentVertex + 3;
-        lineIndices[lIndex++] = currentVertex + 7;
+        addQuad(v0, v1, v2, v3);
     }
 };
