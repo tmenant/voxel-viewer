@@ -1,5 +1,7 @@
 #pragma once
 
+#include "glm/ext/matrix_float4x4.hpp"
+#include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h> // include glad to get the required OpenGL headers
 
 #include <fstream>
@@ -70,6 +72,11 @@ public:
         glUniform1f(getUniformLocation(name), value);
     }
 
+    void setMat4(const std::string &name, const glm::mat4 &matrix) const
+    {
+        glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+
     GLint getUniformLocation(const std::string &name) const
     {
         auto it = uniforms.find(name);
@@ -90,7 +97,7 @@ private:
 
         try
         {
-            vShaderFile.open("shaders/" + shaderPath);
+            vShaderFile.open(shaderPath);
 
             std::stringstream vShaderStream;
             vShaderStream << vShaderFile.rdbuf();
