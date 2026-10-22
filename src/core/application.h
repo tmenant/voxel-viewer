@@ -47,6 +47,15 @@ private:
 
         m_camera.processInputs(dt, m_input);
 
+        if (m_input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        {
+            glfwSetInputMode(m_window.getNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+        else
+        {
+            glfwSetInputMode(m_window.getNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+
         if (m_input.isKeyPressed(GLFW_KEY_ESCAPE))
         {
             m_window.close();
