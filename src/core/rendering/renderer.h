@@ -2,10 +2,15 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include "shader.h"
 #include "camera.h"
 #include "world/voxel_world.h"
+#include "core/geometry/voxel.h"
 
 class Renderer
 {
@@ -15,6 +20,8 @@ private:
     GLuint m_vao = 0;
     GLuint m_vbo = 0;
     GLuint m_ebo = 0;
+
+    size_t verticesCount;
 
 public:
     Renderer() : m_shader("shaders/voxel.vert", "shaders/voxel.frag")
@@ -48,56 +55,35 @@ public:
         m_shader.setMat4("u_Model", model);
 
         glBindVertexArray(m_vao);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, verticesCount, GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(0);
     }
 
 private:
     void setupCubeMesh()
     {
-        // clang-format off
-        float vertices[] = {
-            // Face avant
-            -0.5f, -0.5f,  0.5f,
-             0.5f, -0.5f,  0.5f,
-             0.5f,  0.5f,  0.5f,
-            -0.5f,  0.5f,  0.5f,
-            // Face arrière
-            -0.5f, -0.5f, -0.5f,
-             0.5f, -0.5f, -0.5f,
-             0.5f,  0.5f, -0.5f,
-            -0.5f,  0.5f, -0.5f,
+        std::vector<glm::vec3> positions = {
+            { 0, 0, 0 },
+            { 0, 2, 0 },
         };
 
-        unsigned int indices[] = {
-            // Avant
-            0, 1, 2,  2, 3, 0,
-            // Arrière
-            5, 4, 7,  7, 6, 5,
-            // Gauche
-            4, 0, 3,  3, 7, 4,
-            // Droite
-            1, 5, 6,  6, 2, 1,
-            // Haut
-            3, 2, 6,  6, 7, 3,
-            // Bas
-            4, 5, 1,  1, 0, 4
-        };
-        // clang-format on
+        VoxelMesh mesh(positions);
+
+        verticesCount = mesh.indices.size();
 
         glGenVertexArrays(1, &m_vao);
+
         glGenBuffers(1, &m_vbo);
         glGenBuffers(1, &m_ebo);
 
         glBindVertexArray(m_vao);
 
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
 
-        // Attribut 0 : Position (3 floats)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
 

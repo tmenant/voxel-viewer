@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/ext/vector_float3.hpp"
 #include <cstdint>
 #include <vector>
 
@@ -47,13 +48,6 @@ public:
     }
 };
 
-struct vec3
-{
-    int x;
-    int y;
-    int z;
-};
-
 /*      y
         |
        [4]-------------[7]
@@ -73,18 +67,20 @@ struct vec3
 struct VoxelMesh
 {
     std::vector<float> vertices;
+    std::vector<uint32_t> indices;
 
     VoxelMesh(const VoxelMesh &) = delete;
     VoxelMesh &operator=(const VoxelMesh &) = delete;
 
-    VoxelMesh(const std::vector<vec3> &voxels)
+    VoxelMesh(const std::vector<glm::vec3> &voxels)
     {
         int vIndex = 0;
         int iIndex = 0;
 
-        vertices.resize(voxels.size() * 8);
+        vertices.resize(voxels.size() * 24);
+        indices.resize(voxels.size() * 36);
 
-        for (const vec3 &position : voxels)
+        for (const glm::vec3 &position : voxels)
         {
             int currentVertex = vIndex / 3;
 
@@ -127,6 +123,60 @@ struct VoxelMesh
             vertices[vIndex++] = position.x + 0.5f;
             vertices[vIndex++] = position.y + 0.5f;
             vertices[vIndex++] = position.z - 0.5f;
+
+            // bottom
+            indices[iIndex++] = currentVertex + 0;
+            indices[iIndex++] = currentVertex + 2;
+            indices[iIndex++] = currentVertex + 1;
+
+            indices[iIndex++] = currentVertex + 0;
+            indices[iIndex++] = currentVertex + 3;
+            indices[iIndex++] = currentVertex + 2;
+
+            // top
+            indices[iIndex++] = currentVertex + 4;
+            indices[iIndex++] = currentVertex + 5;
+            indices[iIndex++] = currentVertex + 6;
+
+            indices[iIndex++] = currentVertex + 6;
+            indices[iIndex++] = currentVertex + 7;
+            indices[iIndex++] = currentVertex + 4;
+
+            // front
+            indices[iIndex++] = currentVertex + 1;
+            indices[iIndex++] = currentVertex + 2;
+            indices[iIndex++] = currentVertex + 6;
+
+            indices[iIndex++] = currentVertex + 6;
+            indices[iIndex++] = currentVertex + 5;
+            indices[iIndex++] = currentVertex + 1;
+
+            // rear
+            indices[iIndex++] = currentVertex + 0;
+            indices[iIndex++] = currentVertex + 4;
+            indices[iIndex++] = currentVertex + 7;
+
+            indices[iIndex++] = currentVertex + 7;
+            indices[iIndex++] = currentVertex + 3;
+            indices[iIndex++] = currentVertex + 0;
+
+            // right
+            indices[iIndex++] = currentVertex + 3;
+            indices[iIndex++] = currentVertex + 7;
+            indices[iIndex++] = currentVertex + 6;
+
+            indices[iIndex++] = currentVertex + 6;
+            indices[iIndex++] = currentVertex + 2;
+            indices[iIndex++] = currentVertex + 3;
+
+            // left
+            indices[iIndex++] = currentVertex + 0;
+            indices[iIndex++] = currentVertex + 1;
+            indices[iIndex++] = currentVertex + 5;
+
+            indices[iIndex++] = currentVertex + 5;
+            indices[iIndex++] = currentVertex + 4;
+            indices[iIndex++] = currentVertex + 0;
         }
     }
 };
